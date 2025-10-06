@@ -40,7 +40,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { customerId, status, orderItems, notes, deliveryDate, sellerUserId, shippingAddress, shippingCity, shippingState, shippingZip } = body as any;
 
-    const totalAmount = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const totalAmount = (orderItems as Array<{ price: number; quantity: number }>).
+      reduce((sum: number, item) => sum + Number(item.price) * Number(item.quantity), 0);
     const orderNumber = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
 
     const created = await prisma.order.create({
