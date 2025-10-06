@@ -84,7 +84,7 @@ export async function getPlantById(id: string) {
   }
 }
 
-export async function createPlant(data: Prisma.PlantsCreateInput) {
+export async function createPlant(data: Prisma.PlantsUncheckedCreateInput) {
   console.log("creating plant");
   console.log(data);
   try {
@@ -95,7 +95,7 @@ export async function createPlant(data: Prisma.PlantsCreateInput) {
       data: {
         ...data,
         userId: currentUserId,
-      },
+      } as Prisma.PlantsUncheckedCreateInput,
     });
     revalidatePath("/plants");
     return newPlant;
