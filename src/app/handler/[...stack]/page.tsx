@@ -1,5 +1,5 @@
-import { StackHandler } from "@stackframe/stack";
+import { StackHandler, type BaseHandlerProps } from "@stackframe/stack";
 
-export default function Handler(props: unknown) {
+export default function Handler(props: BaseHandlerProps) {
   return <StackHandler {...props} />;
 }
