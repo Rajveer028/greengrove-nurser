@@ -1,5 +1,8 @@
-import { StackHandler, type BaseHandlerProps } from "@stackframe/stack";
+import { StackHandler } from "@stackframe/stack";
+import type { ComponentProps } from "react";
 
-export default function Handler(props: BaseHandlerProps) {
+type HandlerProps = ComponentProps<typeof StackHandler>;
+
+export default function Handler(props: HandlerProps) {
   return <StackHandler {...props} />;
 }
