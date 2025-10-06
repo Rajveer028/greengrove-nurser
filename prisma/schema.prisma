@@ -13,6 +13,11 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+enum Role {
+    OWNER
+    CUSTOMER
+}
+
 model Plants {
     id          String   @id @default(cuid())
     name        String
@@ -38,6 +43,7 @@ model Plants {
     difficultyLevel   String? // Easy, Medium, Hard
     
     // Relationships
+    user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
     orderItems        OrderItem[]
     careSchedules     CareSchedule[]
     inventoryLogs    InventoryLog[]
@@ -60,6 +66,7 @@ model Customer {
     userId      String
     
     // Relationships
+    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
     orders      Order[]
     
     @@map("customers")
@@ -76,9 +83,16 @@ model Order {
     notes       String?
     createdAt   DateTime @default(now())
     updatedAt   DateTime @updatedAt
-    userId      String
+    userId      String           // seller (owner) db id
+    buyerUserId String?          // customer user db id
+    shippingAddress String?
+    shippingCity    String?
+    shippingState   String?
+    shippingZip     String?
     
     // Relationships
+    user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+    buyer       User?      @relation("UserOrders", fields: [buyerUserId], references: [id])
     customer    Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
     orderItems  OrderItem[]
     
@@ -95,6 +109,7 @@ model OrderItem {
     userId    String
     
     // Relationships
+    user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
     order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
     plant     Plants  @relation(fields: [plantId], references: [id], onDelete: Cascade)
     
@@ -117,6 +132,7 @@ model Supplier {
     userId      String
     
     // Relationships
+    user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
     inventoryLogs InventoryLog[]
     
     @@map("suppliers")
@@ -136,6 +152,7 @@ model CareSchedule {
     userId      String
     
     // Relationships
+    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
     plant       Plants   @relation(fields: [plantId], references: [id], onDelete: Cascade)
     
     @@map("care_schedules")
@@ -153,10 +170,36 @@ model InventoryLog {
     userId      String
     
     // Relationships
-    plant       Plants   @relation(fields: [plantId], references: [id], onDelete: Cascade)
+    user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    plant       Plants    @relation(fields: [plantId], references: [id], onDelete: Cascade)
     supplier    Supplier? @relation(fields: [supplierId], references: [id])
     
     @@map("inventory_logs")
+}
+
+model User {
+    id              String   @id @default(cuid())
+    stackUserId     String   @unique
+    displayName     String
+    email           String   @unique
+    passwordHash    String?
+    role            Role     @default(OWNER)
+    profileImageUrl String?
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+    
+    // Relationships
+    plants          Plants[]
+    customers       Customer[]
+    orders          Order[]        // seller orders
+    customerOrders  Order[] @relation("UserOrders") // as buyer
+    orderItems      OrderItem[]
+    suppliers       Supplier[]
+    careSchedules   CareSchedule[]
+    inventoryLogs   InventoryLog[]
+    notifications   Notification[]
+    
+    @@map("users")
 }
 
 model Notification {
@@ -167,6 +210,9 @@ model Notification {
     isRead      Boolean  @default(false)
     createdAt   DateTime @default(now())
     userId      String
+    
+    // Relationships
+    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
     
     @@map("notifications")
 }

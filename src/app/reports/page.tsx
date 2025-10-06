@@ -1,10 +1,25 @@
 import { getCurrentUser } from "@/lib/auth";
+import { headers } from "next/headers";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, TrendingUp, DollarSign, Package, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
+
+async function fetchStats() {
+  const hdrs = headers();
+  const host = hdrs.get('host');
+  const cookie = hdrs.get('cookie') || '';
+  const protocol = process.env.VERCEL ? 'https' : 'http';
+  const base = host ? `${protocol}://${host}` : '';
+  const res = await fetch(`${base}/api/dashboard`, { cache: 'no-store', headers: { cookie } });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.stats;
+}
 
 export default async function ReportsPage() {
   const user = await getCurrentUser();
+  const stats = user ? await fetchStats() : null;
 
   if (!user) {
     return (
@@ -47,10 +62,10 @@ export default async function ReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                ₹45,67,890
+                ₹{(stats?.totalRevenue || 0).toLocaleString()}
               </div>
               <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                +12.5% from last month
+                Updated from live orders
               </p>
             </CardContent>
           </Card>
@@ -63,11 +78,9 @@ export default async function ReportsPage() {
               <Package className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                234
-              </div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats?.totalOrders ?? 0}</div>
               <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                +8.2% from last month
+                Total orders (all time)
               </p>
             </CardContent>
           </Card>
@@ -80,28 +93,22 @@ export default async function ReportsPage() {
               <Users className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                89
-              </div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats?.totalCustomers ?? 0}</div>
               <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
-                +15.3% from last month
+                Customers in your database
               </p>
             </CardContent>
           </Card>
 
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Inventory Value
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Plants</CardTitle>
               <TrendingUp className="h-4 w-4 text-orange-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                $12,345
-              </div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats?.totalPlants ?? 0}</div>
               <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
-                +5.7% from last month
+                From live inventory
               </p>
             </CardContent>
           </Card>
@@ -122,20 +129,20 @@ export default async function ReportsPage() {
             <CardContent>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">This Month</span>
-                  <span className="font-semibold">₹1,23,450</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Total Revenue</span>
+                  <span className="font-semibold">₹{(stats?.totalRevenue || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Last Month</span>
-                  <span className="font-semibold">₹1,09,870</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Total Orders</span>
+                  <span className="font-semibold">{stats?.totalOrders ?? 0}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Growth</span>
-                  <span className="text-green-600 font-semibold">+12.3%</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Pending Orders</span>
+                  <span className="font-semibold">{stats?.pendingOrders ?? 0}</span>
                 </div>
               </div>
-              <Button className="w-full mt-4" variant="outline">
-                View Detailed Report
+              <Button className="w-full mt-4" variant="outline" asChild>
+                <Link href="/reports/sales">View Detailed Report</Link>
               </Button>
             </CardContent>
           </Card>
@@ -154,19 +161,19 @@ export default async function ReportsPage() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Total Plants</span>
-                  <span className="font-semibold">156</span>
+                  <span className="font-semibold">{stats?.totalPlants ?? 0}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Low Stock</span>
-                  <span className="text-red-600 font-semibold">12</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Low Stock (&lt;10)</span>
+                  <span className="text-red-600 font-semibold">{stats?.lowStockPlants ?? 0}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Out of Stock</span>
-                  <span className="text-red-600 font-semibold">3</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Upcoming Care (7d)</span>
+                  <span className="text-emerald-600 font-semibold">{stats?.upcomingCareTasks ?? 0}</span>
                 </div>
               </div>
-              <Button className="w-full mt-4" variant="outline">
-                View Inventory Report
+              <Button className="w-full mt-4" variant="outline" asChild>
+                <Link href="/reports/inventory">View Inventory Report</Link>
               </Button>
             </CardContent>
           </Card>
@@ -184,20 +191,20 @@ export default async function ReportsPage() {
             <CardContent>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">New Customers</span>
-                  <span className="font-semibold">23</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Total Customers</span>
+                  <span className="font-semibold">{stats?.totalCustomers ?? 0}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Returning Customers</span>
-                  <span className="font-semibold">66</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Completed Care (30d)</span>
+                  <span className="font-semibold">{stats?.completedCareTasks ?? 0}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Retention Rate</span>
-                  <span className="text-green-600 font-semibold">74.2%</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Pending Orders</span>
+                  <span className="text-green-600 font-semibold">{stats?.pendingOrders ?? 0}</span>
                 </div>
               </div>
-              <Button className="w-full mt-4" variant="outline">
-                View Customer Report
+              <Button className="w-full mt-4" variant="outline" asChild>
+                <Link href="/reports/customers">View Customer Report</Link>
               </Button>
             </CardContent>
           </Card>
@@ -215,20 +222,20 @@ export default async function ReportsPage() {
             <CardContent>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Revenue Growth</span>
-                  <span className="text-green-600 font-semibold">+18.5%</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Total Revenue</span>
+                  <span className="text-green-600 font-semibold">₹{(stats?.totalRevenue || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Order Growth</span>
-                  <span className="text-green-600 font-semibold">+22.1%</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Orders</span>
+                  <span className="text-green-600 font-semibold">{stats?.totalOrders ?? 0}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Customer Growth</span>
-                  <span className="text-green-600 font-semibold">+15.3%</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Customers</span>
+                  <span className="text-green-600 font-semibold">{stats?.totalCustomers ?? 0}</span>
                 </div>
               </div>
-              <Button className="w-full mt-4" variant="outline">
-                View Growth Report
+              <Button className="w-full mt-4" variant="outline" asChild>
+                <Link href="/reports/growth">View Growth Report</Link>
               </Button>
             </CardContent>
           </Card>

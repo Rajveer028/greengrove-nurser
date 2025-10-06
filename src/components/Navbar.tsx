@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import ModeToggle from "./ModeToggle";
 import { getCurrentUser } from "@/lib/auth";
+import { signOut } from "@/actions/auth.action";
 
 async function Navbar() {
   const user = await getCurrentUser();
@@ -34,12 +35,7 @@ async function Navbar() {
             </Link>
           </div>
 
-          {/* Greeting */}
-          {user?.name && (
-            <span className="text-[14px] text-green-700 dark:text-green-500 italic">
-              {`Hello, ${user.name.split(" ")[0]}`}
-            </span>
-          )}
+		  {/* Greeting removed as per requirements */}
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-2">
@@ -124,24 +120,30 @@ async function Navbar() {
 
             {user ? (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-green-700 dark:text-green-500">
-                  Demo User
-                </span>
-                <Button
-                  variant="ghost"
-                  className="flex items-center gap-2 text-green-800"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span className="hidden lg:inline">Sign Out</span>
-                </Button>
+				<span className="text-sm text-green-700 dark:text-green-500">
+				  {user.displayName}
+				</span>
+                <form action={signOut}>
+                  <Button
+                    type="submit"
+                    variant="ghost"
+                    className="flex items-center gap-2 text-green-800"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span className="hidden lg:inline">Sign Out</span>
+                  </Button>
+                </form>
               </div>
             ) : (
               <Button
                 variant="ghost"
                 className="flex items-center gap-2 text-green-800"
+                asChild
               >
-                <LogIn className="w-4 h-4" />
-                <span className="hidden lg:inline">Sign In</span>
+                <Link href="/sign-in">
+                  <LogIn className="w-4 h-4" />
+                  <span className="hidden lg:inline">Sign In</span>
+                </Link>
               </Button>
             )}
           </div>

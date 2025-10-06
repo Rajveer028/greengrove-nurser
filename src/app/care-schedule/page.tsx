@@ -1,68 +1,26 @@
 import { getCurrentUser } from "@/lib/auth";
 import CareScheduleTable from "@/components/CareScheduleTable";
+import { headers } from "next/headers";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-// Mock data for care schedules - in a real app, this would come from your database
-const mockCareSchedules = [
-  {
-    id: "1",
-    plant: {
-      name: "Monstera Deliciosa",
-      imageUrl: "/616pW-u9fxL._AC_UF1000,1000_QL80_.jpg"
-    },
-    taskType: "watering",
-    frequency: "Weekly",
-    lastPerformed: new Date("2024-02-15"),
-    nextDue: new Date("2024-02-22"),
-    isCompleted: false,
-    notes: "Water thoroughly, allow soil to dry between waterings"
-  },
-  {
-    id: "2",
-    plant: {
-      name: "Fiddle Leaf Fig",
-      imageUrl: "/616pW-u9fxL._AC_UF1000,1000_QL80_.jpg"
-    },
-    taskType: "fertilizing",
-    frequency: "Monthly",
-    lastPerformed: new Date("2024-01-20"),
-    nextDue: new Date("2024-02-20"),
-    isCompleted: false,
-    notes: "Use balanced liquid fertilizer"
-  },
-  {
-    id: "3",
-    plant: {
-      name: "Snake Plant",
-      imageUrl: "/616pW-u9fxL._AC_UF1000,1000_QL80_.jpg"
-    },
-    taskType: "watering",
-    frequency: "Bi-weekly",
-    lastPerformed: new Date("2024-02-10"),
-    nextDue: new Date("2024-02-24"),
-    isCompleted: false,
-    notes: "Minimal watering required"
-  },
-  {
-    id: "4",
-    plant: {
-      name: "Pothos Golden",
-      imageUrl: "/616pW-u9fxL._AC_UF1000,1000_QL80_.jpg"
-    },
-    taskType: "pruning",
-    frequency: "Monthly",
-    lastPerformed: new Date("2024-01-15"),
-    nextDue: new Date("2024-02-15"),
-    isCompleted: true,
-    notes: "Trim back leggy growth"
-  }
-];
+async function fetchCareSchedules() {
+  const hdrs = headers();
+  const host = hdrs.get('host');
+  const cookie = hdrs.get('cookie') || '';
+  const protocol = process.env.VERCEL ? 'https' : 'http';
+  const base = host ? `${protocol}://${host}` : '';
+  const res = await fetch(`${base}/api/care-schedule`, { cache: 'no-store', headers: { cookie } });
+  if (!res.ok) return [] as any[];
+  const data = await res.json();
+  return data.careSchedules || [];
+}
 
 export default async function CareSchedulePage() {
   const user = await getCurrentUser();
+  const careSchedules = user ? await fetchCareSchedules() : [];
 
   if (!user) {
     return (
@@ -104,7 +62,7 @@ export default async function CareSchedulePage() {
 
         <Card className="rounded-2xl bg-white/70 dark:bg-[#152a1e]/70 shadow-xl border border-green-200 dark:border-green-900 backdrop-blur-lg">
           <CardContent className="p-6">
-            <CareScheduleTable careSchedules={mockCareSchedules} />
+            <CareScheduleTable careSchedules={careSchedules} />
           </CardContent>
         </Card>
       </div>

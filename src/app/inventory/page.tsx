@@ -1,8 +1,22 @@
 import { getCurrentUser } from "@/lib/auth";
+import { headers } from "next/headers";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, AlertTriangle, CheckCircle, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+
+async function fetchPlants() {
+  const hdrs = headers();
+  const host = hdrs.get('host');
+  const cookie = hdrs.get('cookie') || '';
+  const protocol = process.env.VERCEL ? 'https' : 'http';
+  const base = host ? `${protocol}://${host}` : '';
+  const res = await fetch(`${base}/api/plants`, { cache: 'no-store', headers: { cookie } });
+  if (!res.ok) return [] as any[];
+  const data = await res.json();
+  return data.plants || [];
+}
 
 export default async function InventoryPage() {
   const user = await getCurrentUser();
@@ -22,25 +36,29 @@ export default async function InventoryPage() {
     );
   }
 
-  // Mock inventory data
-  const inventoryStats = {
-    totalPlants: 156,
-    lowStock: 12,
-    outOfStock: 3,
-    totalValue: 1234567, // ₹12,34,567
-    categories: [
-      { name: "Indoor Plants", count: 89, value: 678950 }, // ₹6,78,950
-      { name: "Outdoor Plants", count: 45, value: 345617 }, // ₹3,45,617
-      { name: "Succulents", count: 22, value: 210000 } // ₹2,10,000
-    ]
-  };
-
-  const lowStockPlants = [
-    { name: "Monstera Deliciosa", currentStock: 2, minStock: 5, category: "Indoor Plants" },
-    { name: "Fiddle Leaf Fig", currentStock: 1, minStock: 3, category: "Indoor Plants" },
-    { name: "Snake Plant", currentStock: 0, minStock: 4, category: "Indoor Plants" },
-    { name: "Pothos Golden", currentStock: 3, minStock: 6, category: "Indoor Plants" }
-  ];
+  const plants = await fetchPlants();
+  const totalPlants = plants.length;
+  const lowStock = plants.filter((p: any) => (p.stock ?? 0) < 10).length;
+  const outOfStock = plants.filter((p: any) => (p.stock ?? 0) === 0).length;
+  const totalValue = plants.reduce((sum: number, p: any) => sum + (Number(p.price) || 0) * (Number(p.stock) || 0), 0);
+  const categoriesMap: Record<string, { count: number; value: number }> = {};
+  for (const p of plants) {
+    const key = p.category || 'Uncategorized';
+    const price = Number(p.price) || 0;
+    const stock = Number(p.stock) || 0;
+    if (!categoriesMap[key]) categoriesMap[key] = { count: 0, value: 0 };
+    categoriesMap[key].count += 1;
+    categoriesMap[key].value += price * stock;
+  }
+  const categories = Object.entries(categoriesMap).map(([name, info]) => ({ name, count: info.count, value: info.value }));
+  const lowStockPlants = plants
+    .filter((p: any) => (p.stock ?? 0) < 10)
+    .map((p: any) => ({
+      name: p.name,
+      currentStock: Number(p.stock) || 0,
+      minStock: 10,
+      category: p.category || 'Uncategorized',
+    }));
 
   return (
     <main className="min-h-screen w-full bg-gradient-to-b from-green-50 via-white to-green-100 dark:from-[#0e281a] dark:via-[#000000] dark:to-[#112d1d] transition-colors">
@@ -68,7 +86,7 @@ export default async function InventoryPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {inventoryStats.totalPlants}
+                {totalPlants}
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Plants in inventory
@@ -85,7 +103,7 @@ export default async function InventoryPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {inventoryStats.lowStock}
+                {lowStock}
               </div>
               <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
                 Need restocking
@@ -102,7 +120,7 @@ export default async function InventoryPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {inventoryStats.outOfStock}
+                {outOfStock}
               </div>
               <p className="text-xs text-red-600 dark:text-red-400 mt-1">
                 Urgent restock needed
@@ -119,7 +137,7 @@ export default async function InventoryPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                ₹{inventoryStats.totalValue.toLocaleString()}
+                ₹{totalValue.toLocaleString()}
               </div>
               <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
                 Inventory value
@@ -163,8 +181,8 @@ export default async function InventoryPage() {
                   </div>
                 ))}
               </div>
-              <Button className="w-full mt-4" variant="outline">
-                View All Low Stock Items
+              <Button className="w-full mt-4" variant="outline" asChild>
+                <Link href="/inventory/low-stock">View All Low Stock Items</Link>
               </Button>
             </CardContent>
           </Card>
@@ -182,7 +200,7 @@ export default async function InventoryPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {inventoryStats.categories.map((category, index) => (
+                {categories.map((category, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                     <div>
                       <p className="font-medium text-gray-900 dark:text-gray-100">
@@ -203,8 +221,8 @@ export default async function InventoryPage() {
                   </div>
                 ))}
               </div>
-              <Button className="w-full mt-4" variant="outline">
-                View Category Details
+              <Button className="w-full mt-4" variant="outline" asChild>
+                <Link href="/inventory/categories">View Category Details</Link>
               </Button>
             </CardContent>
           </Card>

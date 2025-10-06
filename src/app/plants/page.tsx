@@ -22,11 +22,11 @@ async function page() {
             <h2 className="text-3xl font-semibold text-green-800 dark:text-green-300 mb-4">
               🌱 Welcome to GreenGrove
             </h2>
-            <div className="bg-white/80 dark:bg-[#1a2f24]/70 border border-green-200 dark:border-green-800 shadow-lg p-6 rounded-xl backdrop-blur-md transition-all">
-              <p className="text-green-700 dark:text-green-300">
-                You are now logged in as Demo User. Explore the enhanced nursery management features!
-              </p>
-            </div>
+			<div className="bg-white/80 dark:bg-[#1a2f24]/70 border border-green-200 dark:border-green-800 shadow-lg p-6 rounded-xl backdrop-blur-md transition-all">
+			  <p className="text-green-700 dark:text-green-300">
+				Sign in to manage your plant inventory.
+			  </p>
+			</div>
           </section>
         )}
       </div>

@@ -1,54 +1,26 @@
 import { getCurrentUser } from "@/lib/auth";
 import CustomerTable from "@/components/CustomerTable";
+import { headers } from "next/headers";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-// Mock data for customers - in a real app, this would come from your database
-const mockCustomers = [
-  {
-    id: "1",
-    firstName: "Sarah",
-    lastName: "Johnson",
-    email: "sarah.johnson@email.com",
-    phone: "+1 (555) 123-4567",
-    city: "Portland",
-    state: "OR",
-    createdAt: new Date("2024-01-15"),
-    orders: [
-      { id: "1", totalAmount: 8999, status: "delivered" }, // ₹8,999
-      { id: "2", totalAmount: 4550, status: "processing" } // ₹4,550
-    ]
-  },
-  {
-    id: "2",
-    firstName: "Michael",
-    lastName: "Chen",
-    email: "michael.chen@email.com",
-    phone: "+1 (555) 987-6543",
-    city: "Seattle",
-    state: "WA",
-    createdAt: new Date("2024-02-03"),
-    orders: [
-      { id: "3", totalAmount: 15675, status: "delivered" } // ₹15,675
-    ]
-  },
-  {
-    id: "3",
-    firstName: "Emily",
-    lastName: "Rodriguez",
-    email: "emily.rodriguez@email.com",
-    phone: "+1 (555) 456-7890",
-    city: "San Francisco",
-    state: "CA",
-    createdAt: new Date("2024-02-20"),
-    orders: []
-  }
-];
+async function fetchCustomers() {
+  const hdrs = headers();
+  const host = hdrs.get('host');
+  const cookie = hdrs.get('cookie') || '';
+  const protocol = process.env.VERCEL ? 'https' : 'http';
+  const base = host ? `${protocol}://${host}` : '';
+  const res = await fetch(`${base}/api/customers`, { cache: 'no-store', headers: { cookie } });
+  if (!res.ok) return [] as any[];
+  const data = await res.json();
+  return data.customers || [];
+}
 
 export default async function CustomersPage() {
   const user = await getCurrentUser();
+  const customers = user ? await fetchCustomers() : [];
 
   if (!user) {
     return (
@@ -90,7 +62,7 @@ export default async function CustomersPage() {
 
         <Card className="rounded-2xl bg-white/70 dark:bg-[#152a1e]/70 shadow-xl border border-green-200 dark:border-green-900 backdrop-blur-lg">
           <CardContent className="p-6">
-            <CustomerTable customers={mockCustomers} />
+            <CustomerTable customers={customers} />
           </CardContent>
         </Card>
       </div>
