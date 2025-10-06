@@ -1,0 +1,172 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Plants {
+    id          String   @id @default(cuid())
+    name        String
+    description String?
+    category    String
+    stock       Int
+    price       Float
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    userId      String
+    imageUrl    String?
+    
+    // Enhanced fields
+    scientificName    String?
+    careInstructions  String?
+    wateringFrequency String?
+    sunlightRequirement String?
+    soilType          String?
+    matureSize        String?
+    bloomTime         String?
+    isIndoor          Boolean @default(true)
+    isToxicToPets     Boolean @default(false)
+    difficultyLevel   String? // Easy, Medium, Hard
+    
+    // Relationships
+    orderItems        OrderItem[]
+    careSchedules     CareSchedule[]
+    inventoryLogs    InventoryLog[]
+    
+    @@map("plants")
+}
+
+model Customer {
+    id          String   @id @default(cuid())
+    firstName   String
+    lastName    String
+    email       String   @unique
+    phone       String?
+    address     String?
+    city        String?
+    state       String?
+    zipCode     String?
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    userId      String
+    
+    // Relationships
+    orders      Order[]
+    
+    @@map("customers")
+}
+
+model Order {
+    id          String   @id @default(cuid())
+    orderNumber String   @unique
+    customerId  String
+    status      String   // Pending, Processing, Shipped, Delivered, Cancelled
+    totalAmount Float
+    orderDate   DateTime @default(now())
+    deliveryDate DateTime?
+    notes       String?
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    userId      String
+    
+    // Relationships
+    customer    Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+    orderItems  OrderItem[]
+    
+    @@map("orders")
+}
+
+model OrderItem {
+    id        String  @id @default(cuid())
+    orderId   String
+    plantId   String
+    quantity  Int
+    price     Float
+    createdAt DateTime @default(now())
+    userId    String
+    
+    // Relationships
+    order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+    plant     Plants  @relation(fields: [plantId], references: [id], onDelete: Cascade)
+    
+    @@map("order_items")
+}
+
+model Supplier {
+    id          String   @id @default(cuid())
+    name        String
+    contactName String?
+    email       String?
+    phone       String?
+    address     String?
+    city        String?
+    state       String?
+    zipCode     String?
+    isActive    Boolean  @default(true)
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    userId      String
+    
+    // Relationships
+    inventoryLogs InventoryLog[]
+    
+    @@map("suppliers")
+}
+
+model CareSchedule {
+    id          String   @id @default(cuid())
+    plantId     String
+    taskType    String   // Watering, Fertilizing, Pruning, Repotting
+    frequency   String   // Daily, Weekly, Monthly, etc.
+    lastPerformed DateTime?
+    nextDue     DateTime
+    isCompleted Boolean  @default(false)
+    notes       String?
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    userId      String
+    
+    // Relationships
+    plant       Plants   @relation(fields: [plantId], references: [id], onDelete: Cascade)
+    
+    @@map("care_schedules")
+}
+
+model InventoryLog {
+    id          String   @id @default(cuid())
+    plantId     String
+    supplierId  String?
+    action      String   // Stock In, Stock Out, Adjustment, Sale
+    quantity    Int
+    reason      String?
+    notes       String?
+    createdAt   DateTime @default(now())
+    userId      String
+    
+    // Relationships
+    plant       Plants   @relation(fields: [plantId], references: [id], onDelete: Cascade)
+    supplier    Supplier? @relation(fields: [supplierId], references: [id])
+    
+    @@map("inventory_logs")
+}
+
+model Notification {
+    id          String   @id @default(cuid())
+    title       String
+    message     String
+    type        String   // Low Stock, Care Reminder, Order Update
+    isRead      Boolean  @default(false)
+    createdAt   DateTime @default(now())
+    userId      String
+    
+    @@map("notifications")
+}
