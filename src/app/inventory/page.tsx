@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 
+type LowStockPlant = {
+  name: string;
+  currentStock: number;
+  minStock: number;
+  category: string;
+};
+
 async function fetchPlants() {
   const hdrs = headers();
   const host = hdrs.get('host');
@@ -51,9 +58,9 @@ export default async function InventoryPage() {
     categoriesMap[key].value += price * stock;
   }
   const categories = Object.entries(categoriesMap).map(([name, info]) => ({ name, count: info.count, value: info.value }));
-  const lowStockPlants = plants
+  const lowStockPlants: LowStockPlant[] = plants
     .filter((p: any) => (p.stock ?? 0) < 10)
-    .map((p: any) => ({
+    .map((p: any): LowStockPlant => ({
       name: p.name,
       currentStock: Number(p.stock) || 0,
       minStock: 10,
