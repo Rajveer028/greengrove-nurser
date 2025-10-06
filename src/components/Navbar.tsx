@@ -17,6 +17,12 @@ import ModeToggle from "./ModeToggle";
 import { getCurrentUser } from "@/lib/auth";
 import { signOut } from "@/actions/auth.action";
 
+// Wrapper server action that conforms to Next.js form action typing (returns void)
+export async function handleSignOut() {
+  "use server";
+  await signOut();
+}
+
 async function Navbar() {
   const user = await getCurrentUser();
 
@@ -123,7 +129,7 @@ async function Navbar() {
 				<span className="text-sm text-green-700 dark:text-green-500">
 				  {user.displayName}
 				</span>
-                <form action={signOut}>
+                <form action={handleSignOut}>
                   <Button
                     type="submit"
                     variant="ghost"
