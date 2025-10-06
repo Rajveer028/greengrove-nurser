@@ -60,7 +60,13 @@ export async function POST(request: NextRequest) {
         shippingState,
         shippingZip,
         orderItems: {
-          create: orderItems.map((i) => ({ plantId: i.plantId, quantity: i.quantity, price: i.price, userId: dbUser.id })),
+          create: (orderItems as Array<{ plantId: string; quantity: number; price: number }>).
+            map((i: { plantId: string; quantity: number; price: number }) => ({
+              plantId: i.plantId,
+              quantity: Number(i.quantity),
+              price: Number(i.price),
+              userId: dbUser.id,
+            })),
         },
       },
       include: { customer: true, orderItems: { include: { plant: true } } },
