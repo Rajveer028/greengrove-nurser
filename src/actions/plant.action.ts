@@ -115,7 +115,6 @@ export async function editPlant(
       where: { id },
       data: {
         ...data,
-        userId: currentUserId,
       },
     });
     revalidatePath("/plants");
